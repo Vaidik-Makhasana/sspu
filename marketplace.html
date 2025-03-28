@@ -41,6 +41,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
         }
 
         .logo h2 {
@@ -53,56 +55,32 @@
             color: #666;
         }
 
-        .nav-buttons {
-            display: flex;
+        .student-stats {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: right;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
         }
 
-        button {
-            padding: 0.8rem 1.5rem;
-            background: #cc0000;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s ease;
+        .stat-item {
+            text-align: center;
         }
 
-        button:hover {
-            background: #ff4d4d;
-        }
-
-        .logout-btn {
-            background: #666;
-        }
-
-        .logout-btn:hover {
-            background: #888;
-        }
-
-        .student-info {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .student-info h3 {
-            color: #cc0000;
-            margin-bottom: 1rem;
-        }
-
-        .points-display {
+        .stat-value {
             font-size: 1.5rem;
             color: #cc0000;
             font-weight: bold;
         }
 
-        .streak-info {
-            margin-top: 0.5rem;
+        .stat-label {
             color: #666;
+            font-size: 0.9rem;
         }
 
         .courses-grid {
@@ -114,10 +92,11 @@
 
         .course-card {
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            position: relative;
         }
 
         .course-card:hover {
@@ -138,18 +117,27 @@
             color: #333;
             font-size: 1.2rem;
             margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
         .course-description {
             color: #666;
             margin-bottom: 1rem;
             font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         .course-points {
             color: #cc0000;
             font-weight: bold;
             margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .course-points::before {
+            content: '🎯';
         }
 
         .purchase-btn {
@@ -161,6 +149,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s ease;
+            font-weight: 500;
         }
 
         .purchase-btn:hover {
@@ -174,56 +163,87 @@
 
         .purchased-courses {
             margin-top: 3rem;
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
         }
 
         .purchased-courses h3 {
             color: #cc0000;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
         }
 
         .purchased-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
         }
 
         .purchased-item {
             background: white;
-            padding: 1rem;
+            padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .purchased-item h4 {
             color: #333;
             margin-bottom: 0.5rem;
+            font-size: 1.1rem;
         }
 
         .purchased-item p {
             color: #666;
             font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: white;
+            color: #cc0000;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #cc0000;
+            color: white;
         }
     </style>
 </head>
 <body>
+    <a href="student-form.html" class="back-btn">← Back to Attendance</a>
+
     <div class="container">
         <div class="header">
             <div class="logo">
                 <h2>SSPU</h2>
                 <p>Symbiosis Skills and Professional University</p>
             </div>
-            <div class="nav-buttons">
-                <button onclick="window.location.href='attendance.html'">Generate QR</button>
-                <button onclick="window.location.href='analytics.html'">Analytics</button>
-                <button onclick="window.location.href='marketplace.html'" class="active">Marketplace</button>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+            <div class="student-stats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="studentPoints">0</div>
+                        <div class="stat-label">Points</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="studentStreak">0</div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="attendanceCount">0</div>
+                        <div class="stat-label">Attendance</div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div class="student-info">
-            <h3>Student Information</h3>
-            <div class="points-display">Points: <span id="studentPoints">0</span></div>
-            <div class="streak-info">Current Streak: <span id="studentStreak">0</span> days</div>
         </div>
 
         <h3>Available Courses</h3>
@@ -244,31 +264,45 @@
         const courses = [
             {
                 id: 1,
-                title: "Advanced Python Programming",
-                description: "Master advanced Python concepts and frameworks",
+                title: "Python Programming Masterclass",
+                description: "Learn Python from basics to advanced concepts, including data structures, algorithms, and web development",
                 points: 100,
                 image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?ixlib=rb-4.0.3"
             },
             {
                 id: 2,
-                title: "Web Development Bootcamp",
-                description: "Learn full-stack web development from scratch",
+                title: "Ethical Hacking Fundamentals",
+                description: "Introduction to cybersecurity, penetration testing, and ethical hacking techniques",
                 points: 150,
-                image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3"
+                image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3"
             },
             {
                 id: 3,
-                title: "Data Science Fundamentals",
-                description: "Introduction to data analysis and machine learning",
+                title: "Web Development Bootcamp",
+                description: "Full-stack web development with HTML, CSS, JavaScript, and modern frameworks",
                 points: 200,
-                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3"
+                image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3"
             },
             {
                 id: 4,
-                title: "Cloud Computing",
-                description: "Learn AWS, Azure, and Google Cloud platforms",
+                title: "Data Science & Analytics",
+                description: "Learn data analysis, visualization, and machine learning fundamentals",
                 points: 250,
+                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3"
+            },
+            {
+                id: 5,
+                title: "Cloud Computing & DevOps",
+                description: "Master AWS, Docker, Kubernetes, and CI/CD pipelines",
+                points: 300,
                 image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?ixlib=rb-4.0.3"
+            },
+            {
+                id: 6,
+                title: "Mobile App Development",
+                description: "Build iOS and Android apps using React Native and Flutter",
+                points: 350,
+                image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3"
             }
         ];
 
@@ -276,7 +310,7 @@
         window.onload = function() {
             const studentId = sessionStorage.getItem('studentId');
             if (!studentId) {
-                window.location.href = 'index.html';
+                window.location.href = 'student-form.html';
                 return;
             }
 
@@ -289,6 +323,16 @@
             const studentData = JSON.parse(localStorage.getItem(`student_${studentId}`) || '{}');
             document.getElementById('studentPoints').textContent = studentData.points || 0;
             document.getElementById('studentStreak').textContent = studentData.streak || 0;
+            
+            // Calculate total attendance
+            let totalAttendance = 0;
+            for (let key in localStorage) {
+                if (key.startsWith('students_')) {
+                    const sessionStudents = JSON.parse(localStorage.getItem(key) || '[]');
+                    totalAttendance += sessionStudents.filter(s => s.prn === studentId).length;
+                }
+            }
+            document.getElementById('attendanceCount').textContent = totalAttendance;
         }
 
         function displayCourses() {
@@ -308,11 +352,11 @@
                     <div class="course-content">
                         <h3 class="course-title">${course.title}</h3>
                         <p class="course-description">${course.description}</p>
-                        <div class="course-points">Points Required: ${course.points}</div>
+                        <div class="course-points">${course.points} Points</div>
                         <button class="purchase-btn" 
                                 onclick="purchaseCourse(${course.id})"
                                 ${isPurchased || !canAfford ? 'disabled' : ''}>
-                            ${isPurchased ? 'Purchased' : canAfford ? 'Purchase' : 'Insufficient Points'}
+                            ${isPurchased ? 'Purchased' : canAfford ? 'Purchase Course' : 'Insufficient Points'}
                         </button>
                     </div>
                 `;
@@ -337,6 +381,9 @@
                 loadStudentData(studentId);
                 displayCourses();
                 loadPurchasedCourses(studentId);
+
+                // Show success message
+                alert(`Successfully purchased ${course.title}!`);
             }
         }
 
@@ -349,6 +396,11 @@
                 (studentData.purchasedCourses || []).includes(course.id)
             );
 
+            if (purchasedCourses.length === 0) {
+                purchasedList.innerHTML = '<p style="color: #666; text-align: center;">No courses purchased yet. Use your attendance points to unlock courses!</p>';
+                return;
+            }
+
             purchasedCourses.forEach(course => {
                 const purchasedItem = document.createElement('div');
                 purchasedItem.className = 'purchased-item';
@@ -358,11 +410,6 @@
                 `;
                 purchasedList.appendChild(purchasedItem);
             });
-        }
-
-        function logout() {
-            sessionStorage.removeItem('studentId');
-            window.location.href = 'index.html';
         }
     </script>
 </body>
