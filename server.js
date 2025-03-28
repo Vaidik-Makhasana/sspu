@@ -32,6 +32,5 @@ app.get('/marketplace.html', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-    console.log(`Access the application from any device on your network using your computer's IP address`);
+    console.log(`Server is running on port ${port}`);
 }); 
