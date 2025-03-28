@@ -123,6 +123,31 @@
             margin: 0.3rem 0;
             color: #666;
         }
+
+        .status.error {
+            background: #ffe6e6;
+            color: #cc0000;
+        }
+
+        .marketplace-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 1rem;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .marketplace-btn:hover {
+            background: #ff4d4d;
+        }
     </style>
 </head>
 <body>
@@ -153,6 +178,8 @@
         </form>
 
         <div id="status" class="status"></div>
+
+        <a href="marketplace.html" class="marketplace-btn">Visit Course Marketplace</a>
     </div>
 
     <script>
@@ -205,7 +232,7 @@
                     if (studentData.streak % 6 === 0) {
                         // Bonus points for 6-day streak
                         studentData.points = (studentData.points || 0) + 10;
-                        showStatus('Congratulations! You earned 10 bonus points for your 6-day streak!', 'success');
+                        showStatus('Congratulations! You earned 10 bonus points for your 6-day streak! Visit the marketplace to use your points.', 'success');
                     }
                 } else if (lastDate.toISOString().split('T')[0] !== today) {
                     // Streak broken
@@ -235,7 +262,10 @@
             localStorage.setItem(`students_${sessionId}`, JSON.stringify(students));
             localStorage.setItem(`student_${prn}`, JSON.stringify(studentData));
 
-            showStatus('Attendance marked successfully!', 'success');
+            // Store student ID for marketplace access
+            sessionStorage.setItem('studentId', prn);
+
+            showStatus('Attendance marked successfully! Visit the marketplace to use your points.', 'success');
             document.getElementById('attendanceForm').reset();
         });
 
