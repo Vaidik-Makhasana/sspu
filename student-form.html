@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('https://login.sspu.ac.in/images/campus-pic.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #cc0000;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #cc0000;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: #e6ffe6;
+            color: #006600;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #cc0000;
+        }
+
+        .session-info {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .session-info p {
+            margin: 0.3rem 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="header">
+            <h1>SSPU Attendance</h1>
+            <p>Please enter your details to mark attendance</p>
+        </div>
+
+        <div class="session-info">
+            <p id="sessionYear"></p>
+            <p id="sessionSection"></p>
+            <p id="sessionSubject"></p>
+        </div>
+
+        <form id="attendanceForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" required placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+                <label for="prn">PRN Number</label>
+                <input type="text" id="prn" required placeholder="Enter your PRN number">
+            </div>
+
+            <button type="submit">Mark Attendance</button>
+        </form>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // Get session data from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('sessionId');
+        const year = urlParams.get('year');
+        const section = urlParams.get('section');
+        const subject = urlParams.get('subject');
+
+        // Display session info immediately
+        document.getElementById('sessionYear').textContent = `Year: ${year?.toUpperCase() || '-'}`;
+        document.getElementById('sessionSection').textContent = `Section: ${section?.toUpperCase() || '-'}`;
+        document.getElementById('sessionSubject').textContent = `Subject: ${subject?.toUpperCase() || '-'}`;
+
+        if (!sessionId) {
+            showStatus('Invalid session. Please scan the QR code again.', 'error');
+        }
+
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const prn = document.getElementById('prn').value;
+
+            // Get existing students
+            const students = JSON.parse(localStorage.getItem(`students_${sessionId}`) || '[]');
+
+            // Check if student already marked attendance
+            if (students.some(s => s.prn === prn)) {
+                showStatus('You have already marked your attendance.', 'error');
+                return;
+            }
+
+            // Get or create student data
+            let studentData = JSON.parse(localStorage.getItem(`student_${prn}`) || '{}');
+            
+            // Update attendance streak
+            const today = new Date().toISOString().split('T')[0];
+            const lastAttendance = studentData.lastAttendance;
+            
+            if (lastAttendance) {
+                const lastDate = new Date(lastAttendance);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (lastDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+                    // Consecutive day
+                    studentData.streak = (studentData.streak || 0) + 1;
+                    if (studentData.streak % 6 === 0) {
+                        // Bonus points for 6-day streak
+                        studentData.points = (studentData.points || 0) + 10;
+                        showStatus('Congratulations! You earned 10 bonus points for your 6-day streak!', 'success');
+                    }
+                } else if (lastDate.toISOString().split('T')[0] !== today) {
+                    // Streak broken
+                    studentData.streak = 1;
+                }
+            } else {
+                // First attendance
+                studentData.streak = 1;
+            }
+
+            // Add attendance points
+            studentData.points = (studentData.points || 0) + 10;
+            studentData.lastAttendance = today;
+
+            // Add new student to session
+            students.push({
+                name,
+                prn,
+                year,
+                section,
+                subject,
+                timestamp: new Date().toISOString(),
+                status: 'Present'
+            });
+
+            // Save updated data
+            localStorage.setItem(`students_${sessionId}`, JSON.stringify(students));
+            localStorage.setItem(`student_${prn}`, JSON.stringify(studentData));
+
+            showStatus('Attendance marked successfully!', 'success');
+            document.getElementById('attendanceForm').reset();
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

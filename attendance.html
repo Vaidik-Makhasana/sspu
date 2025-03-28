@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSPU Faculty QR Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('https://login.sspu.ac.in/images/campus-pic.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #cc0000;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #cc0000;
+            box-shadow: 0 0 5px rgba(204, 0, 0, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo h2 {
+            color: #cc0000;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #666;
+        }
+
+        .faculty-info {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .logout-btn {
+            background: #666;
+            margin-top: 1rem;
+        }
+
+        .logout-btn:hover {
+            background: #888;
+        }
+
+        #qrcode {
+            margin: 2rem auto;
+            text-align: center;
+            display: none;
+        }
+
+        .qr-info {
+            text-align: center;
+            margin-top: 1rem;
+            color: #333;
+            display: none;
+        }
+
+        .qr-info p {
+            margin: 0.5rem 0;
+        }
+
+        .copy-btn {
+            background: #4CAF50;
+            margin-top: 1rem;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+        }
+
+        .logout-btn {
+            background: #666;
+        }
+
+        .logout-btn:hover {
+            background: #888;
+        }
+
+        .active {
+            background: #ff4d4d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h2>SSPU</h2>
+                <p>Symbiosis Skills and Professional University</p>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="window.location.href='attendance.html'" class="active">Generate QR</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="faculty-info">
+            Faculty ID: <span id="displayFacultyId"></span>
+        </div>
+        <h1>Generate Attendance QR Code</h1>
+        <form id="qrForm">
+            <div class="form-group">
+                <label for="year">Select Year</label>
+                <select id="year" name="year" required>
+                    <option value="">Choose Year</option>
+                    <option value="fy">First Year</option>
+                    <option value="sy">Second Year</option>
+                    <option value="ty">Third Year</option>
+                    <option value="final">Final Year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="section">Select Section</label>
+                <select id="section" name="section" required>
+                    <option value="">Choose Section</option>
+                    <option value="a">Section A</option>
+                    <option value="b">Section B</option>
+                    <option value="c">Section C</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="subject">Select Subject</label>
+                <select id="subject" name="subject" required>
+                    <option value="">Choose Subject</option>
+                    <option value="os">Operating Systems</option>
+                    <option value="python">Python Programming</option>
+                    <option value="ds">Data Structures</option>
+                    <option value="web">Web Technologies</option>
+                    <option value="math">Mathematics</option>
+                </select>
+            </div>
+            <button type="submit">Generate QR Code</button>
+        </form>
+    </div>
+
+    <script>
+        // Check if faculty is logged in
+        window.onload = function() {
+            const facultyId = sessionStorage.getItem('facultyId');
+            if (!facultyId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            document.getElementById('displayFacultyId').textContent = facultyId;
+        }
+
+        document.getElementById('qrForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const facultyId = sessionStorage.getItem('facultyId');
+            const year = document.getElementById('year').value;
+            const section = document.getElementById('section').value;
+            const subject = document.getElementById('subject').value;
+
+            // Create attendance data
+            const attendanceData = {
+                facultyId: facultyId,
+                year: year,
+                section: section,
+                subject: subject,
+                timestamp: new Date().toISOString()
+            };
+
+            // Store current session data
+            localStorage.setItem('currentSession', JSON.stringify(attendanceData));
+
+            // Redirect to analytics page immediately
+            window.location.href = 'analytics.html';
+        });
+
+        function logout() {
+            sessionStorage.removeItem('facultyId');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html> 

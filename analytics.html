@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSPU Attendance Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('https://login.sspu.ac.in/images/campus-pic.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+            margin-right: 250px; /* Make space for QR code */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h2 {
+            color: #cc0000;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #666;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+        }
+
+        .logout-btn {
+            background: #666;
+        }
+
+        .logout-btn:hover {
+            background: #888;
+        }
+
+        .faculty-info {
+            text-align: right;
+            color: #333;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-card h3 {
+            color: #cc0000;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h4 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .qr-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            text-align: center;
+            width: 200px;
+        }
+
+        .qr-container h4 {
+            color: #cc0000;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        #qrcode {
+            margin: 0 auto;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .qr-info {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .qr-info p {
+            margin: 0.3rem 0;
+            font-weight: 500;
+        }
+
+        .container {
+            margin-right: 250px;
+        }
+
+        .student-list {
+            margin-top: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-list h3 {
+            color: #cc0000;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .student-table th,
+        .student-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .student-table th {
+            background: #f5f5f5;
+            color: #cc0000;
+        }
+
+        .student-table tr:hover {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-container">
+        <h4>Attendance QR Code</h4>
+        <div id="qrcode"></div>
+        <div class="qr-info">
+            <p id="qrYear"></p>
+            <p id="qrSection"></p>
+            <p id="qrSubject"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h2>SSPU</h2>
+                <p>Symbiosis Skills and Professional University</p>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="window.location.href='attendance.html'">Generate QR</button>
+                <button onclick="window.location.href='analytics.html'" class="active">Analytics</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="faculty-info">
+            Faculty ID: <span id="displayFacultyId"></span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Classes</h4>
+                <div class="value">24</div>
+            </div>
+            <div class="stat-card">
+                <h4>Average Attendance</h4>
+                <div class="value">85%</div>
+            </div>
+            <div class="stat-card">
+                <h4>Total Students</h4>
+                <div class="value">120</div>
+            </div>
+            <div class="stat-card">
+                <h4>Active Sessions</h4>
+                <div class="value">3</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>Attendance by Subject</h3>
+                <canvas id="subjectChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Attendance by Section</h3>
+                <canvas id="sectionChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Monthly Attendance Trend</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Year-wise Attendance</h3>
+                <canvas id="yearChart"></canvas>
+            </div>
+        </div>
+
+        <div class="student-list">
+            <h3>Scanned Students</h3>
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>PRN</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="studentList">
+                    <!-- Student entries will be added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Check if faculty is logged in
+        window.onload = function() {
+            const facultyId = sessionStorage.getItem('facultyId');
+            if (!facultyId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load current session data and generate QR code
+            loadCurrentSession();
+            initializeCharts();
+        }
+
+        function loadCurrentSession() {
+            const currentSession = JSON.parse(localStorage.getItem('currentSession') || '{}');
+            if (currentSession) {
+                // Generate unique session ID if not exists
+                const sessionId = currentSession.sessionId || generateSessionId();
+                
+                // Create detailed attendance data
+                const attendanceData = {
+                    sessionId: sessionId,
+                    facultyId: currentSession.facultyId,
+                    year: currentSession.year,
+                    section: currentSession.section,
+                    subject: currentSession.subject,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Store session data
+                localStorage.setItem('currentSession', JSON.stringify(attendanceData));
+
+                // Clear previous QR code if exists
+                const qrcodeElement = document.getElementById('qrcode');
+                qrcodeElement.innerHTML = '';
+
+                // Create URL for mobile form with all necessary data
+                const serverUrl = window.location.origin;
+                const formUrl = `${serverUrl}/student-form.html?sessionId=${sessionId}&year=${currentSession.year}&section=${currentSession.section}&subject=${currentSession.subject}`;
+
+                // Generate new QR code with form URL
+                new QRCode(qrcodeElement, {
+                    text: formUrl,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // Update QR info
+                document.getElementById('qrYear').textContent = `Year: ${currentSession.year?.toUpperCase() || '-'}`;
+                document.getElementById('qrSection').textContent = `Section: ${currentSession.section?.toUpperCase() || '-'}`;
+                document.getElementById('qrSubject').textContent = `Subject: ${currentSession.subject?.toUpperCase() || '-'}`;
+
+                // Reset statistics
+                resetStatistics();
+                
+                // Load existing student data
+                loadStudentList(sessionId);
+            }
+        }
+
+        function generateSessionId() {
+            const timestamp = new Date().getTime();
+            const random = Math.floor(Math.random() * 1000);
+            return `SS${timestamp}${random}`;
+        }
+
+        function resetStatistics() {
+            // Reset stat cards
+            document.querySelectorAll('.stat-card .value').forEach(value => {
+                value.textContent = '0';
+            });
+
+            // Reset charts
+            resetCharts();
+        }
+
+        function resetCharts() {
+            // Subject-wise Attendance Chart
+            new Chart(document.getElementById('subjectChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['OS', 'Python', 'DS', 'Web', 'Math'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: '#cc0000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Section-wise Attendance Chart
+            new Chart(document.getElementById('sectionChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Section A', 'Section B', 'Section C'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#cc0000', '#ff4d4d', '#ff8080']
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Monthly Trend Chart
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [0, 0, 0, 0, 0, 0],
+                        borderColor: '#cc0000',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Year-wise Attendance Chart
+            new Chart(document.getElementById('yearChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['First Year', 'Second Year', 'Third Year', 'Final Year'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#cc0000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeCharts() {
+            // Subject-wise Attendance Chart
+            new Chart(document.getElementById('subjectChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['OS', 'Python', 'DS', 'Web', 'Math'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [85, 90, 88, 82, 87],
+                        backgroundColor: '#cc0000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Section-wise Attendance Chart
+            new Chart(document.getElementById('sectionChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Section A', 'Section B', 'Section C'],
+                    datasets: [{
+                        data: [85, 88, 82],
+                        backgroundColor: ['#cc0000', '#ff4d4d', '#ff8080']
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Monthly Trend Chart
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [82, 85, 88, 86, 90, 85],
+                        borderColor: '#cc0000',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Year-wise Attendance Chart
+            new Chart(document.getElementById('yearChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['First Year', 'Second Year', 'Third Year', 'Final Year'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [88, 85, 82, 90],
+                        backgroundColor: '#cc0000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadStudentList(sessionId) {
+            const students = JSON.parse(localStorage.getItem(`students_${sessionId}`) || '[]');
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td>${student.prn}</td>
+                    <td>${new Date(student.timestamp).toLocaleTimeString()}</td>
+                    <td>${student.status}</td>
+                `;
+                studentList.appendChild(row);
+            });
+
+            // Update statistics
+            updateStatistics(students);
+        }
+
+        function updateStatistics(students) {
+            // Update total students
+            document.querySelector('.stat-card:nth-child(3) .value').textContent = students.length;
+
+            // Update attendance percentage
+            const presentStudents = students.filter(s => s.status === 'Present').length;
+            const attendancePercentage = students.length > 0 ? Math.round((presentStudents / students.length) * 100) : 0;
+            document.querySelector('.stat-card:nth-child(2) .value').textContent = `${attendancePercentage}%`;
+
+            // Update active sessions
+            const activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '[]');
+            document.querySelector('.stat-card:nth-child(4) .value').textContent = activeSessions.length;
+        }
+
+        // Check for new student data every 5 seconds
+        setInterval(() => {
+            const currentSession = JSON.parse(localStorage.getItem('currentSession') || '{}');
+            if (currentSession.sessionId) {
+                loadStudentList(currentSession.sessionId);
+            }
+        }, 5000);
+
+        function logout() {
+            sessionStorage.removeItem('facultyId');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html> 

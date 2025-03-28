@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSPU QR Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 77, 77, 0.9) 0%, rgba(204, 0, 0, 0.9) 100%);
+            z-index: 1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h2 {
+            color: #cc0000;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #666;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+        }
+
+        .logout-btn {
+            background: #666;
+        }
+
+        .logout-btn:hover {
+            background: #888;
+        }
+
+        .active {
+            background: #ff4d4d;
+        }
+
+        .scan-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .attendance-list {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-list h3 {
+            color: #cc0000;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .student-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .student-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .student-id {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .attendance-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h4 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .class-info {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .class-info h3 {
+            color: #cc0000;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .class-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .class-detail-item {
+            text-align: center;
+        }
+
+        .class-detail-item label {
+            display: block;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .class-detail-item span {
+            font-weight: 500;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h2>SSPU</h2>
+                <p>Symbiosis Skills and Professional University</p>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="window.location.href='attendance.html'">Generate QR</button>
+                <button onclick="window.location.href='analytics.html'">Analytics</button>
+                <button onclick="window.location.href='scan.html'" class="active">Scan QR</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="class-info">
+            <h3>Current Session</h3>
+            <div class="class-details">
+                <div class="class-detail-item">
+                    <label>Year</label>
+                    <span id="currentYear">-</span>
+                </div>
+                <div class="class-detail-item">
+                    <label>Section</label>
+                    <span id="currentSection">-</span>
+                </div>
+                <div class="class-detail-item">
+                    <label>Subject</label>
+                    <span id="currentSubject">-</span>
+                </div>
+                <div class="class-detail-item">
+                    <label>Faculty</label>
+                    <span id="currentFaculty">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h4>Present Students</h4>
+                <div class="value" id="presentCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h4>Total Students</h4>
+                <div class="value" id="totalCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h4>Attendance %</h4>
+                <div class="value" id="attendancePercentage">0%</div>
+            </div>
+            <div class="stat-card">
+                <h4>Last Scan</h4>
+                <div class="value" id="lastScan">-</div>
+            </div>
+        </div>
+
+        <div class="scan-container">
+            <div id="reader"></div>
+            <div class="attendance-list">
+                <h3>Attendance List</h3>
+                <div class="student-list" id="studentList">
+                    <!-- Student items will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if faculty is logged in
+        window.onload = function() {
+            const facultyId = sessionStorage.getItem('facultyId');
+            if (!facultyId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Initialize QR Scanner
+            const html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+
+            // Load current session data
+            loadCurrentSession();
+        }
+
+        function loadCurrentSession() {
+            const currentSession = JSON.parse(localStorage.getItem('currentSession') || '{}');
+            if (currentSession) {
+                document.getElementById('currentYear').textContent = currentSession.year?.toUpperCase() || '-';
+                document.getElementById('currentSection').textContent = currentSession.section?.toUpperCase() || '-';
+                document.getElementById('currentSubject').textContent = currentSession.subject?.toUpperCase() || '-';
+                document.getElementById('currentFaculty').textContent = currentSession.facultyId || '-';
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            try {
+                const attendanceData = JSON.parse(decodedText);
+                const studentId = attendanceData.studentId;
+                const timestamp = new Date().toLocaleTimeString();
+
+                // Add student to attendance list
+                addStudentToList(studentId, timestamp);
+                
+                // Update statistics
+                updateStatistics();
+
+                // Stop scanning after successful scan
+                html5QrCode.stop();
+                
+                // Resume scanning after 2 seconds
+                setTimeout(() => {
+                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+                }, 2000);
+            } catch (error) {
+                console.error('Error processing QR code:', error);
+            }
+        }
+
+        function onScanError(errorMessage, error) {
+            // Handle scan error
+            console.error('QR Scan Error:', errorMessage);
+        }
+
+        function addStudentToList(studentId, timestamp) {
+            const studentList = document.getElementById('studentList');
+            const studentItem = document.createElement('div');
+            studentItem.className = 'student-item';
+            studentItem.innerHTML = `
+                <div class="student-info">
+                    <div class="student-name">Student ${studentId}</div>
+                    <div class="student-id">ID: ${studentId}</div>
+                </div>
+                <div class="attendance-time">${timestamp}</div>
+            `;
+            studentList.insertBefore(studentItem, studentList.firstChild);
+        }
+
+        function updateStatistics() {
+            const studentList = document.getElementById('studentList');
+            const presentCount = studentList.children.length;
+            const totalCount = 40; // This should come from your database
+            const percentage = Math.round((presentCount / totalCount) * 100);
+
+            document.getElementById('presentCount').textContent = presentCount;
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('attendancePercentage').textContent = `${percentage}%`;
+            document.getElementById('lastScan').textContent = new Date().toLocaleTimeString();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('facultyId');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html> 
